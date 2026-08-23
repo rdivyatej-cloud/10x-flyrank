@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Expense Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="toast-container"></div>
+
+    <!-- Auth Section -->
+    <div id="auth-section" class="mac-window auth-window">
+        <div class="window-controls">
+            <span class="control red"></span>
+            <span class="control yellow"></span>
+            <span class="control green"></span>
+        </div>
+        <div class="auth-content">
+            <h1 class="brand-title">Smart Expense Tracker</h1>
+            <p class="brand-subtitle">Track your spending. Understand your money.</p>
+            
+            <div id="login-form">
+                <input type="email" id="login-email" class="mac-input" placeholder="Email" value="demo@example.com">
+                <input type="password" id="login-password" class="mac-input" placeholder="Password" value="password123">
+                <button onclick="login()" class="btn-primary">Login</button>
+                <p class="auth-toggle">Don't have an account? <a href="#" onclick="toggleAuth()">Register</a></p>
+            </div>
+            
+            <div id="register-form" style="display: none;">
+                <input type="text" id="reg-name" class="mac-input" placeholder="Name">
+                <input type="email" id="reg-email" class="mac-input" placeholder="Email">
+                <input type="password" id="reg-password" class="mac-input" placeholder="Password">
+                <input type="password" id="reg-password-confirm" class="mac-input" placeholder="Confirm Password">
+                <button onclick="register()" class="btn-primary">Create Account</button>
+                <p class="auth-toggle">Already have an account? <a href="#" onclick="toggleAuth()">Back to Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Section -->
+    <div id="main-app" class="mac-window main-window" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="window-controls">
+                    <span class="control red"></span>
+                    <span class="control yellow"></span>
+                    <span class="control green"></span>
+                </div>
+            </div>
+            <div class="sidebar-title">
+                Smart Expense<br>Tracker
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" onclick="switchTab('dashboard')">
+                    <i class="ph ph-house"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item" onclick="switchTab('expenses')">
+                    <i class="ph ph-wallet"></i> Expenses
+                </a>
+                <a href="#" class="nav-item" onclick="switchTab('analytics')">
+                    <i class="ph ph-chart-pie-slice"></i> Analytics
+                </a>
+                <a href="#" class="nav-item" onclick="switchTab('ai-insights')">
+                    <i class="ph ph-sparkle"></i> AI Insights
+                </a>
+                <a href="#" class="nav-item" onclick="switchTab('reports')">
+                    <i class="ph ph-file-pdf"></i> Reports
+                </a>
+                <a href="#" class="nav-item" onclick="switchTab('settings')">
+                    <i class="ph ph-gear"></i> Settings
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sync-info">
+                    <span id="current-month-display"></span>
+                    <small>Last Sync: Just now</small>
+                </div>
+                <button onclick="logout()" class="btn-logout"><i class="ph ph-sign-out"></i> Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="header-title" id="header-title">
+                    <h1 id="greeting-title">Good morning, User 👋</h1>
+                    <p>Here's your financial overview</p>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn"><i class="ph ph-bell"></i></button>
+                    <div class="profile-dropdown">
+                        <div class="avatar" id="user-avatar">US</div>
+                        <span id="user-name-display" class="user-name">User</span>
+                        <i class="ph ph-caret-down"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard View -->
+            <div id="view-dashboard" class="view-section">
+                <div class="summary-cards">
+                    <div class="mac-card summary-card">
+                        <div class="card-icon blue"><i class="ph ph-currency-inr"></i></div>
+                        <div class="card-info">
+                            <h3>Total Spending</h3>
+                            <p id="sum-total">₹0</p>
+                            <small>All time</small>
+                        </div>
+                    </div>
+                    <div class="mac-card summary-card">
+                        <div class="card-icon green"><i class="ph ph-trend-up"></i></div>
+                        <div class="card-info">
+                            <h3>This Month</h3>
+                            <p id="sum-month">₹0</p>
+                            <small>Current month</small>
+                        </div>
+                    </div>
+                    <div class="mac-card summary-card">
+                        <div class="card-icon orange"><i class="ph ph-receipt"></i></div>
+                        <div class="card-info">
+                            <h3>Total Expenses</h3>
+                            <p id="sum-count">0</p>
+                            <small>Transactions</small>
+                        </div>
+                    </div>
+                    <div class="mac-card summary-card">
+                        <div class="card-icon purple"><i class="ph ph-star"></i></div>
+                        <div class="card-info">
+                            <h3>Top Category</h3>
+                            <p id="sum-top">-</p>
+                            <small id="sum-top-pct">0% of spending</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="mac-card overview-card">
+                        <div class="card-header">
+                            <h2>Spending Overview</h2>
+                            <span class="dropdown-label">This Month <i class="ph ph-caret-down"></i></span>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-canvas-wrapper">
+                                <canvas id="spendingChart"></canvas>
+                                <div class="chart-center-label">
+                                    <h3 id="chart-total">₹0</h3>
+                                    <small>Total</small>
+                                </div>
+                            </div>
+                            <div class="chart-legend" id="chart-legend">
+                                <!-- Legend injected via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mac-card recent-card">
+                        <div class="card-header">
+                            <h2>Recent Expenses</h2>
+                            <a href="#" onclick="switchTab('expenses')" class="view-all">View all <i class="ph ph-arrow-right"></i></a>
+                        </div>
+                        <div class="recent-list" id="recent-expenses-list">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expenses View -->
+            <div id="view-expenses" class="view-section" style="display: none;">
+                <div class="page-header">
+                    <div>
+                        <h2>Expenses</h2>
+                        <p>Manage your spending</p>
+                    </div>
+                    <button class="btn-primary" onclick="openAddModal()"><i class="ph ph-plus"></i> Add Expense</button>
+                </div>
+                <div class="mac-card table-card">
+                    <div class="table-controls">
+                        <div class="search-box">
+                            <i class="ph ph-magnifying-glass"></i>
+                            <input type="text" placeholder="Search expenses..." class="mac-input-small">
+                        </div>
+                        <div class="filters">
+                            <select class="mac-select">
+                                <option>All Categories</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="mac-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="full-expenses-list">
+                                <!-- Injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics View -->
+            <div id="view-analytics" class="view-section" style="display: none;">
+                <div class="page-header">
+                    <h2>Analytics</h2>
+                    <p>Visual breakdown of your finances</p>
+                </div>
+                <div class="mac-card">
+                    <p class="placeholder-text">Analytics dashboard is simplified in this version. Check the main dashboard for an overview.</p>
+                </div>
+            </div>
+
+            <!-- AI Insights View -->
+            <div id="view-ai-insights" class="view-section" style="display: none;">
+                <div class="page-header">
+                    <h2>AI Spending Insights</h2>
+                    <p>Understand your spending with AI-assisted summaries.</p>
+                </div>
+                
+                <div class="mac-card ai-hero-card" id="ai-intro-card">
+                    <div class="ai-icon-large"><i class="ph ph-sparkle"></i></div>
+                    <h3>Analyze your spending</h3>
+                    <p>Get a simple AI-generated summary of your current spending habits and practical suggestions to improve your finances.</p>
+                    <button class="btn-primary btn-ai" onclick="generateInsights()" id="btn-generate-ai">
+                        <i class="ph ph-magic-wand"></i> Generate Insights
+                    </button>
+                </div>
+
+                <div class="mac-card ai-result-card" id="ai-result-card" style="display: none;">
+                    <div class="card-header ai-header">
+                        <h2>✨ Powered by Gemini</h2>
+                        <button class="btn-secondary btn-small" onclick="generateInsights()"><i class="ph ph-arrows-clockwise"></i> Regenerate</button>
+                    </div>
+                    <div class="ai-content-body">
+                        <div class="ai-highlight" id="ai-highlight-text">
+                            <!-- Injected main observation -->
+                        </div>
+                        <div class="ai-details" id="ai-details-content">
+                            <!-- Injected suggestions -->
+                        </div>
+                    </div>
+                    <div class="ai-footer">
+                        <small>AI-generated insights are for informational purposes only. Do not use for high-risk financial decisions.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports View -->
+            <div id="view-reports" class="view-section" style="display: none;">
+                <div class="page-header">
+                    <h2>Reports</h2>
+                    <p>Generate and view your expense reports.</p>
+                </div>
+                <div class="mac-card reports-card">
+                    <div class="report-row">
+                        <div class="report-info">
+                            <div class="report-icon"><i class="ph ph-file-pdf"></i></div>
+                            <div>
+                                <h3>All Time Expense Report</h3>
+                                <p>Generated on demand</p>
+                            </div>
+                        </div>
+                        <button class="btn-primary" id="btn-generate-pdf" onclick="generatePDF()"><i class="ph ph-download-simple"></i> Generate PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="view-settings" class="view-section" style="display: none;">
+                <div class="page-header">
+                    <h2>Settings</h2>
+                    <p>Manage your account preferences</p>
+                </div>
+                <div class="mac-card settings-card">
+                    <h3>Profile</h3>
+                    <div class="setting-row">
+                        <label>Name</label>
+                        <input type="text" class="mac-input" id="setting-name" readonly>
+                    </div>
+                    <div class="setting-row">
+                        <label>Email</label>
+                        <input type="email" class="mac-input" id="setting-email" readonly>
+                    </div>
+                    <hr class="separator">
+                    <h3>Preferences</h3>
+                    <div class="setting-row">
+                        <label>Currency</label>
+                        <select class="mac-select"><option>₹ INR</option></select>
+                    </div>
+                    <div class="setting-row">
+                        <label>Theme</label>
+                        <select class="mac-select"><option>Light (macOS)</option></select>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Expense Modal -->
+    <div id="add-expense-modal" class="modal-overlay">
+        <div class="mac-modal">
+            <div class="modal-header">
+                <h3>Add Expense</h3>
+                <button class="close-btn" onclick="closeAddModal()"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group amount-group">
+                    <span class="currency-symbol">₹</span>
+                    <input type="number" id="modal-exp-amount" class="mac-input amount-input" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <div class="select-wrapper">
+                        <select id="modal-exp-category" class="mac-input">
+                            <option value="Food">Food</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Bills">Bills</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Education">Education</option>
+                            <option value="Health">Health</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <i class="ph ph-caret-down select-icon"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="modal-exp-desc" class="mac-input" placeholder="What was this for?">
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="modal-exp-date" class="mac-input">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAddModal()">Cancel</button>
+                <button class="btn-primary" onclick="submitExpense()">Add Expense</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
